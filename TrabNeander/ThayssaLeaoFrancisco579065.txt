@@ -1,0 +1,135 @@
+﻿Nome: Thayssa Leão Francisco
+Cartão: 00579065
+===============DADOS================== 
+128 A = 
+129 B = 
+130 C = 
+131 P = resultado 2(AxB) 
+132 Q = resultado B/C if(C!=0) else Q=1 
+133 X = resultado (-3xQ)
+134 Y = resultado (1, 0, a5 AND b5, 0, 1, a2, c1, !b0)
+======================================
+==============CONSTANTES E VARIAVEIS===============
+135 0
+136 1
+137  copy_b
+138  copy_c
+139  copy_a 
+140  -1 (255)
+141 contador divisão
+142 constante 2
+143 constante 4
+144 constante 8
+145 constante 32
+146 constante 128
+====================================================
+==================INICIO DO CODIGO================== (POSIÇÃO 0)
+zerar todos os locais de resultado;
+LDA 135 / carregar acumulador com zero
+STA Q / coloca zero em Q
+STA X / coloca zero em X
+STA Y / coloca zero em Y
+STA P /coloca zero em P
+======================================================
+================(AxB)===========================(COMEÇA NA POSIÇÃO 10) 
+LDA 129 / coloca o valor de B no acumulador
+STA 137 / copia o valor de B pro end
+if 
+JZ pula pro 2x(axb) / se o valor de B que estiver no acumulador for 0 
+else;
+LDA P(0) / carrega a variavel do resultado pro acumulador 
+ADD 128(P + A) / faz a primeira soma
+STA P  / coloca o resulta em P 1xA
+LDA 137 / coloca a copy_b no acumulador
+ADD 138 / diminui -1 na copia de B
+STA 137 / coloca o valor na variavel(copy_b = copy_b -1)
+
+JMP JZ / pula pro JZ pois o novo valor de B já esta no acumulador então podemos verificar se é 0
+=======================2×(A×B)==========================(POSIÇÃO 30)
+JZ -> CAI AQUI 
+LDA P / coloca P no acumulador
+ADD P / soma P + P 
+STA P / guarda o resultado no P
+========================(B/C)=======================(POSIÇÃO 36)
+(como saimos da multiplicação eu ja sei que o valor da copy_b esta zerado por causa do JZ)
+LDA 130 / coloca C no acumulador
+JZ posição 67 / se nao for difente de zero, cai na posição 67, Q = 1
+STA copy_c(138) 
+LDA B
+STA copy_b
+LDA copy_c / posição 46 onde cai o jmp
+NOT
+ADD (1) / neste momento temos -C
+ADD (B) / (B-C)
+JZ posição 71 / se acumulador der zero B-C = 0
+JN posição 85 / se der negativo, colocamos o valor do contador em Q
+STA copy b
+LDA 141 (contador)
+ADD (1) contador+1
+STA contador
+JUMP posição 46
+=====================================
+POSIÇÃO 67 Q=1
+LDA 136 / coloca 1 no acumulador
+STA 132 / coloca em Q
+
+-> AQUI CAI JZ (POSIÇÃO 71)
+LDA 141 /coloca o contador no acumulador
+ADD 136 / soma 1 no contador
+STA 141 / carrega o novo valor do acumulador
+LDA 135 / coloca 0 no acumulador
+STA 141 / zera o contador 
+JMP 93 / pula pra proxima operação (-3xQ)
+-> AQUI CAI JN (POSIÇÃO 85)
+se tivemos resto apenas colocamos o valor do contador no resultado e 
+zeremos o contador
+LDA 141 /coloca o contador no acumulador
+STA 132 / coloca o valor do contador no resultado 
+LDA 135 / coloca 0 no acumulador
+STA 141 / zera o contador 
+
+.....vai pra proxima operação posição 93
+
+=====================MULTIPLICAÇÃO DE (-3xQ)==============(POSIÇÃO 93)
+LDA 135 /coloca contaste 0 no acumulador
+(neste momento o acumulador este zerado)
+-> LDA Q / coloco Q pro acumulador 
+ADD Q / (Q + Q) soma Q uma vez
+ADD Q / (Q + Q)+Q 
+NOT inverte os bits 
+ADD 136 // soma +1 
+STA 133 / coloca no resultado
+
+=====================(1, 0, a5 AND b5, 0, 1, a2, c1, !b0)=========
+(COMEÇA NA POSIÇÃO 106)
+somar 8 no Y
+somar 128 no Y
+===========(c1)==============
+LDA 130 (C) (COMEÇA NA POSIÇÃO 114)
+AND (com 2) - se o resultado der 1 significa que o bit C1 é 1 então somamos 1
+JZ  proxins - se o resultador der 0 significa que c1 = 0 logo nao mexemos
+ADD (soma 2 no Y)
+================(a2)==========
+LDA 128 (A) (COMEÇA NA POSIÇÃO 148)
+AND (com 4) - se o resultado der 1 significa que o bit a2 é 1 então somamos 1
+JZ  proxins- se o resultador der 0 significa que a2 = 0 logo nao mexemos
+ADD (soma 4 no Y)
+==============(a5 AND b5)===========
+LDA (A) (COMEÇA NA POSIÇÃO 160)
+AND (32)
+STA copy_a
+LDA (B)
+AND (32)
+AND copy_a
+JZ  proxins- se o resultador der 0 significa que a5 and b5 = 0 logo nao mexemos
+ADD (32 no Y)
+===================(!b0)===================
+LDA 129 (B) (COMEÇA NA POSIÇÃO 180)
+AND (com 1) - se o resultado der 1 significa que o bit b0 é 1 então apenas deixamos ele com zero
+JZ ? (somamos 1 no Y) - se o resultador der 0 significa que b0 = 0 logo somamos 1
+HTL
+
+ADD (1 no Y) (COMEÇA NA POSIÇÃO 187)
+STA 
+HTL
+================FIM==========================

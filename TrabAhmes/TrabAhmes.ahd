@@ -1,0 +1,157 @@
+ORG 128
+x:  DB     ;128 1 byte
+y:  DB    ;129 1 byte
+z:  DB    ;130 1 byte  ;multiplicador(B) de A x B ;142  
+n:  DB    ;131 1 byte
+a1: DB   ;132
+a0: DB   ;133
+b1: DB   ;134
+b0: DB   ;135
+C:  DB    ;136 1 byte
+D:  DB    ;137 1 byte  
+oito: DB 8 ;constante 8 ;138
+zero: DB 0 ; constante 0 ;139
+um: DB   1 ; constante 1 ;140
+i:  DB     ; varivel contador ;141
+vazia: DB ;142
+maux:  DB ; copia do multiplicar(B) de A x B ;143
+mcando: DB ;multiplicando(A) de A x B (A + A + A + A) ; 144 ;variavel que recebe x+y ;144
+;--------------variaveis divisao-----------
+dmst:  DB  ; msbits do dividendo   ;145 ;sera sempre zero, pois só teremos divisao de 8 bits
+dls:  DB  ; lsbits do dividendo	 ;146	
+quociente:    DB 0  ; quociente            ;147
+copy_dlst: DB 0     ; lsbits do dividendo - temp     ;148
+copy_n: DB ;copia do n 
+
+
+ORG 0
+;============(x+y)================
+	LDA zero
+	STA mcando
+	LDA x
+	ADD y
+	STA mcando
+;============(x+y)*z================
+;  AxB onde A(x+y) x B(z), A=mcando B=mcador
+; 1. Inicio: i=8; Pmsb(a1)=0, maux=mcador(x+y)
+      	 LDA oito
+       	 STA i
+      	 LDA zero
+     	 STA  a1
+                 STA a0
+	 STA maux
+       	 LDA z
+      	 STA maux
+; 2. desloca maux p/direita, bit menos significativo vai p/carry
+laco:	 LDA maux
+       	 SHR
+      	 STA maux
+; 3. se carry = 0, pula a soma (passo 4)
+      	 JNC C0
+; 4. a1 = a1 + mcando
+      	 LDA a1
+      	 ADD mcando
+       	STA a1
+; 5 Desloca a1 e a0, com carry
+C0:   	 LDA a1
+      	 ROR
+       	 STA a1
+       	 LDA a0
+      	 ROR
+       	 STA a0
+; 6. Decrementa contador (i)
+       	LDA i
+       	SUB um
+      	STA i
+; 7. Se n!=0, voltar para o passo 2
+       	JNZ laco
+;se for zero, a mulriplicação acaba
+;============(x-y)================
+	LDA zero
+	STA dls
+	LDA x
+	SUB y
+	STA dls
+;==========================(x-y)/z=================================
+;z é o divisor e (x-y) é o dividendo
+; teste de exceções: div. por zero
+     	LDA z  ;teste se z é zero
+    	JZ  div_por_zero ; divisor = 0
+; não ocorreu nenhuma exceção: inicialização
+     	LDA zero
+     	STA dmst   ;sempre sera zero
+     	LDA dls ;(x-y)
+     	STA copy_dlst; dls temporário
+     	LDA oito
+     	STA i   ; contador = 8
+     	LDA zero
+     	STA quociente    ; quociente = 0
+repetir:           ; início do laço
+     	LDA quociente
+     	SHL
+     	STA quociente         ; desloca q p/esquerda
+     	LDA copy_dlst
+     	SHL
+    	STA copy_dlst     ; desloca d p/esquerda
+     	LDA  dmst
+     	ROL           ; desloca D p/esquerda
+     	STA  dmst      ; msbit de D em carry
+     	JC  Dms_maior ; se C=1, D > v
+     	LDA  dmst
+     	SUB z         ; calcula D - v
+    	JB  Dms_menor ; se B=1, D < vDms_maior:
+Dms_maior:
+     	LDA dmst    ; se D >= v
+     	SUB z       ; pode subtrair
+    	STA dmst
+     	LDA quociente      ; e novo dígito de q
+     	OR  um      ; deve ser igual a 1
+    	STA quociente
+	JMP Dms_menor
+ORG 150
+Dms_menor:
+     	LDA i
+     	SUB um      ; decrementa contador
+     	STA i
+     	JNZ repetir ; se i > 0, repete o laço
+fim:            ; fim normal
+     	LDA dmst
+     	STA D      ; resto = Dmst
+	LDA quociente
+	STA C
+     	JMP proximo
+div_por_zero:   ; fim com erro: div. por zero
+     	LDA um
+	STA C
+	LDA zero
+	STA D
+;==============(A/2n)===================
+proximo:
+	;LDA zero	
+	;STA copy_n
+	LDA n
+	JZ  n_zero	
+	STA copy_n
+	LDA a1
+	STA b1
+	LDA a0
+	STA b0
+laco_dois:
+	LDA b1
+	SHR 
+	STA b1
+	LDA b0
+	ROR 
+	STA b0
+	LDA copy_n
+	SUB um
+	STA copy_n
+	JNZ laco_dois
+	JMP fim_dois
+n_zero: 
+	LDA a1
+	STA b1
+	LDA a0
+	STA b0
+fim_dois:	
+	HLT

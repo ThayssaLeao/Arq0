@@ -1,0 +1,47 @@
+ORG 128
+
+b_num DB 		;128
+resultado DB
+contador DB 
+UM: DB 1 		;constante1
+copy_b DB
+ZERO: DB 0
+
+ORG 0 
+LDA ZERO                ;zerando as variaveis
+STA contador
+STA copy_b
+STA resultado
+
+LDA b_num ;carrega 128
+STA copy_b ;copia pro 132
+
+loop:
+LDA copy_b
+SHR 
+STA copy_b
+JC soma_um ;deu carry?
+JZ final
+
+soma_um: 
+LDA contador
+ADD UM
+STA contador
+JMP loop
+
+final:
+LDA contador ;se o bit menos significativo for zero é par 
+AND UM
+JZ  se_par        ;se for par 
+JNZ se_impar         ;se for impar
+
+se_par:
+LDA ZERO
+STA resultado
+HLT
+
+se_impar:
+LDA UM
+STA resultado
+HLT
+   
